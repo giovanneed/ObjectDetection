@@ -12,6 +12,7 @@ import org.json.JSONObject
 
 class DropboxAPI {
 
+
     fun getFileTempLink(file: String,context: Context, callback: (tempPath: TempPath?, error: Error?) -> Unit)  {
 
 
@@ -55,7 +56,7 @@ class DropboxAPI {
                 val headers = HashMap<String, String>()
 
                 //insert auth here
-                headers["Authorization"] = "Bearer "
+                headers["Authorization"] = "Bearer " + Credentials().dropBoxKey
                 headers["Content-Type"] = "application/json"
 
                 return headers

@@ -61,8 +61,21 @@ class MainActivity : AppCompatActivity() {
                 if (error != null) {
                     txtView!!.text = error.messege
 
-                } else {
+                }
+
+                if (tempPath != null) {
+
+
                     txtView!!.text = tempPath?.link
+
+                    IBMCloudAPI().getDescription(tempPath.link,this){ classifierParser, error ->
+
+                        if (classifierParser != null) {
+                            txtView!!.text = classifierParser.classifiers[0].className
+
+                        }
+
+                    }
 
                 }
             }
