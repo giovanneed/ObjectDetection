@@ -14,11 +14,20 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.android.volley.Request
 import com.android.volley.Response
+import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONArray
 import org.json.JSONObject
+import com.android.volley.AuthFailureError
+import org.json.JSONException
+import android.widget.Toast
+import android.R.attr.tag
+import com.android.volley.VolleyLog
+import com.android.volley.VolleyError
+
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,7 +57,16 @@ class MainActivity : AppCompatActivity() {
 
             }
 
-            getUsers()
+            DropboxAPI().getFileTempLink("",this){tempPath, error ->
+                if (error != null) {
+                    txtView!!.text = error.messege
+
+                } else {
+                    txtView!!.text = tempPath?.link
+
+                }
+            }
+           // getFileTempLink("test")
         }
     }
 
@@ -131,6 +149,103 @@ class MainActivity : AppCompatActivity() {
 
             })
         queue.add(stringReq)
+    }
+
+    fun getFileTempLink(file: String) {
+
+        Log.d("giovanne","getFileTempLink request was made")
+
+
+        val queue = Volley.newRequestQueue(this)
+        val url: String = "https://api.dropboxapi.com/2/files/get_temporary_link"
+
+
+        val params = HashMap<Any?,Any?>()
+
+        params["path"] = "/images/can-coke.png"
+
+        val jsonObject = JSONObject(params)
+
+
+        val req = object : JsonObjectRequest(Request.Method.POST, url, jsonObject,
+            Response.Listener { response ->
+                Log.d("Webservice","response: " + response )
+
+            }, Response.ErrorListener { error ->
+                txtView!!.text = error.toString()
+
+            }) {
+
+            /**
+             * Passing some request headers
+             */
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): Map<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer k1thLpF7CEYAAAAAAAAOH4J3-pOaQGWgLGnVCe3GDuMqAJdph0OM9D5UxgL0xPfy"
+                headers["Content-Type"] = "application/json"
+
+                return headers
+            }
+        }
+
+        queue.add(req)
+
+
+
+        /* val jsonRequest = JsonObjectRequest(Request.Method.POST, url,jsonObject,
+             Response.Listener { response ->
+
+
+                 if (response == null ) {
+                     val error = Error()
+                    // callback.invoke(null,error)
+                     return@Listener
+                 }
+
+                 Log.d("Webservice","createReport response: " + response )
+
+
+
+                // callback.invoke(true,null)
+
+
+             },
+             Response.ErrorListener {error->
+                 //val error = Error()
+                // error.messege = error.messege
+                 //callback.invoke(null,error)
+                 txtView!!.text = error.toString()
+
+
+             })
+
+
+
+         queue.add(jsonRequest)*/
+
+        /*val stringRequest = object: StringRequest(Request.Method.POST, url,
+            Response.Listener<String> { response ->
+                txtView!!.text = response.toString()
+                Log.d("A", "Response is: " + response.substring(0,500))
+            },
+            Response.ErrorListener {  })
+        {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["Authorization"] = "Bearer k1thLpF7CEYAAAAAAAAOH4J3-pOaQGWgLGnVCe3GDuMqAJdph0OM9D5UxgL0xPfy"
+                headers["Content-Type"] = "application/json"
+
+                return headers
+            }
+        }
+
+        queue.add(stringRequest)*/
+
+
+
+
+
     }
 
 }
