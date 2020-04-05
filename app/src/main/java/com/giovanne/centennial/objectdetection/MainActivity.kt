@@ -1,16 +1,24 @@
 package com.giovanne.centennial.objectdetection
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,6 +38,17 @@ class MainActivity : AppCompatActivity() {
 
             }
 
+        }
+
+        analyzeButton.setOnClickListener {
+            if (isOnline(this))  {
+                Log.d("giovanne","has conectivity")
+            } else {
+                Log.d("giovanne","doesnt have conectivity")
+
+            }
+
+            getUsers()
         }
     }
 
@@ -73,4 +92,45 @@ class MainActivity : AppCompatActivity() {
             picImageView.setImageBitmap(bmp)
         }
     }
+
+    fun isOnline(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val networkInfo = connectivityManager.activeNetworkInfo
+        return networkInfo != null && networkInfo.isConnected
+    }
+
+    // function for network call
+    fun getUsers() {
+        // Instantiate the RequestQueue.
+        val queue = Volley.newRequestQueue(this)
+        val url: String = "https://api.github.com/search/users?q=eyehunt"
+
+        Log.d("giovanne","call get users fun")
+
+
+        // Request a string response from the provided URL.
+        val stringReq = StringRequest(
+
+            Request.Method.GET, url,
+            Response.Listener<String> { response ->
+
+                Log.d("giovanne","request was made")
+
+                var strResp = response.toString()
+                val jsonObj: JSONObject = JSONObject(strResp)
+                val jsonArray: JSONArray = jsonObj.getJSONArray("items")
+                var str_user: String = ""
+                for (i in 0 until jsonArray.length()) {
+                    var jsonInner: JSONObject = jsonArray.getJSONObject(i)
+                    str_user = str_user + "\n" + jsonInner.get("login")
+                }
+                txtView!!.text = "response : $str_user "
+            },
+            Response.ErrorListener { error->
+                txtView!!.text = error.toString()
+
+            })
+        queue.add(stringReq)
+    }
+
 }
