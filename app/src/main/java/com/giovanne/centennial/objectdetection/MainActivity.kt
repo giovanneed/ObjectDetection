@@ -24,9 +24,11 @@ import com.android.volley.AuthFailureError
 import org.json.JSONException
 import android.widget.Toast
 import android.R.attr.tag
+import android.net.Uri
 import com.android.volley.VolleyLog
 import com.android.volley.VolleyError
-
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
@@ -57,7 +59,19 @@ class MainActivity : AppCompatActivity() {
 
             }
 
-            DropboxAPI().getFileTempLink("",this){tempPath, error ->
+
+
+                DropboxAPI().uploadImage(imageData,this){success: Boolean, error: Error? ->
+
+                }
+
+
+
+
+
+
+
+           /* DropboxAPI().getFileTempLink("",this){tempPath, error ->
                 if (error != null) {
                     txtView!!.text = error.messege
 
@@ -78,8 +92,17 @@ class MainActivity : AppCompatActivity() {
                     }
 
                 }
-            }
+            }*/
            // getFileTempLink("test")
+        }
+    }
+
+    @Throws(IOException::class)
+
+    private fun createImageData(uri: Uri) {
+        val inputStream = contentResolver.openInputStream(uri)
+        inputStream?.buffered()?.use {
+            imageData = it.readBytes()
         }
     }
 
@@ -115,12 +138,16 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode==REQUEST_IMAGE_CAPTURE){
-            val uri = data?.data
-            if (uri != null) {
-                //createImageData(uri)
-            }
+
             var bmp = data?.extras?.get("data") as Bitmap
             picImageView.setImageBitmap(bmp)
+
+
+            val stream = ByteArrayOutputStream()
+            bmp.compress(Bitmap.CompressFormat.PNG, 90, stream)
+            imageData = stream.toByteArray()
+
+
         }
     }
 

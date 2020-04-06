@@ -21,7 +21,7 @@ class DropboxAPI {
 
         val params = HashMap<Any?,Any?>()
 
-        params["path"] = "/images/can-coke.png"
+        params["path"] = "/images/objDetectImage.png"
 
         val jsonObject = JSONObject(params)
 
@@ -66,5 +66,64 @@ class DropboxAPI {
         queue.add(req)
     }
 
+
+    fun uploadImage(imageData: ByteArray?,context: Context, callback: (success: Boolean, error: Error?) -> Unit)  {
+
+        imageData?: return
+
+
+        Log.d("Webservice","upload Image ")
+
+
+        val queue = Volley.newRequestQueue(context)
+        val url: String = "https://content.dropboxapi.com/2/files/upload"
+
+        val request = object : VolleyFileUploadRequest(
+            Method.POST,
+            url,
+            Response.Listener {
+                println("response is: $it")
+
+                Log.d("Webservice","response  $it")
+
+            },
+            Response.ErrorListener {
+                println("error is: $it")
+                Log.d("Webservice","error  " + it.message)
+
+            }
+        ) {
+
+            @Throws(AuthFailureError::class)
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+
+                //insert auth here
+                headers["Authorization"] = "Bearer " + Credentials().dropBoxKey
+                headers["Content-Type"] = "application/octet-stream"
+                headers["Dropbox-API-Arg"] =" {\"path\": \"/Images/objDetectImage.png\", \"mode\": \"add\", \"autorename\": true, \"mute\": false, \"strict_conflict\": false}"
+
+
+                Log.d("Webservice","Headers  " + headers.toString())
+
+
+                return headers
+            }
+            override fun getByteData(): MutableMap<String, FileDataPart> {
+                var params = HashMap<String, FileDataPart>()
+                params["imageFile"] = FileDataPart("image", imageData!!, "png")
+                return params
+            }
+
+        }
+
+        Volley.newRequestQueue(context).add(request)
+
+
+
+    }
+
 }
+
+
 
