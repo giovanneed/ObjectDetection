@@ -27,6 +27,8 @@ import android.R.attr.tag
 import android.app.Activity
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -47,6 +49,11 @@ class MainActivity : AppCompatActivity() {
     private var imageData: ByteArray? = null
 
     var fileName = ""
+
+    val mainHandler = Handler(Looper.getMainLooper())
+    var wordsCount = 0
+    var handlerRunning = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,7 +130,8 @@ class MainActivity : AppCompatActivity() {
                 IBMCloudAPI().getDescription(tempPath.link,this){ classifierParser, error ->
 
                     if (classifierParser != null) {
-                        txtView!!.text = classifierParser.classifiers[0].className
+                        //txtView!!.text = classifierParser.classifiers[0].className
+                        parseImage(classifierParser)
 
                     }
 
@@ -133,6 +141,42 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
+
+    fun parseImage(classifierParser: ClassifierParser){
+
+        wordsCount = classifierParser.classifiers.size
+
+        mainHandler.post(object : Runnable {
+            override fun run() {
+                handlerRunning = true
+
+                if (wordsCount == classifierParser.classifiers.size) {
+                    wordsCount = 0
+                }
+                val classifier = classifierParser.classifiers[wordsCount]
+                txtView!!.text = classifier.className
+                wordsCount++
+
+                mainHandler.postDelayed(this, 1000)
+            }
+        })
+
+    }
+
+    fun reset(){
+
+        if (handlerRunning == true) {
+            mainHandler.removeCallbacksAndMessages(null)
+            handlerRunning = false
+
+        }
+        wordsCount = 0
+        txtView!!.text = "What is it?"
+
+
+
+    }
+
 
 
     @Throws(IOException::class)
@@ -181,7 +225,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
+        reset()
+
         if (requestCode==REQUEST_IMAGE_CAPTURE){
+
+            reset()
 
             var bmp = data?.extras?.get("data") as Bitmap
 
