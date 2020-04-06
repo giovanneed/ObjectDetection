@@ -27,6 +27,9 @@ import android.R.attr.tag
 import android.app.Activity
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import com.android.volley.VolleyLog
 import com.android.volley.VolleyError
 import java.io.ByteArrayOutputStream
@@ -89,6 +92,9 @@ class MainActivity : AppCompatActivity() {
 
     fun uploadImage(){
 
+        txtView!!.text = "Analyzing..."
+
+
         fileName = randomString()
 
 
@@ -100,6 +106,8 @@ class MainActivity : AppCompatActivity() {
 
     fun analyze(){
 
+        txtView!!.text = "checking..."
+
         DropboxAPI().getFileTempLink(fileName,this){tempPath, error ->
             if (error != null) {
                 txtView!!.text = error.messege
@@ -108,8 +116,9 @@ class MainActivity : AppCompatActivity() {
 
             if (tempPath != null) {
 
+                txtView!!.text = "just a few seconds..."
 
-                txtView!!.text = tempPath?.link
+                //txtView!!.text = tempPath?.link
 
                 IBMCloudAPI().getDescription(tempPath.link,this){ classifierParser, error ->
 
@@ -207,6 +216,30 @@ class MainActivity : AppCompatActivity() {
         return networkInfo != null && networkInfo.isConnected
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+
+
+        R.id.action_favorite -> {
+            // User chose the "Favorite" action, mark the current item
+            // as a favorite...
+            Toast.makeText(this@MainActivity, "Developed by \nGiovanne Dias \nMaria Metrina \nCentennial College 2020", Toast.LENGTH_LONG).show()
+
+
+            true
+        }
+
+        else -> {
+            // If we got here, the user's action was not recognized.
+            // Invoke the superclass to handle it.
+            super.onOptionsItemSelected(item)
+        }
+    }
     // function for network call
     fun getUsers() {
         // Instantiate the RequestQueue.
