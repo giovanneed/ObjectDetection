@@ -24,6 +24,8 @@ import com.android.volley.AuthFailureError
 import org.json.JSONException
 import android.widget.Toast
 import android.R.attr.tag
+import android.app.Activity
+import android.graphics.BitmapFactory
 import android.net.Uri
 import com.android.volley.VolleyLog
 import com.android.volley.VolleyError
@@ -33,12 +35,20 @@ import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
+
+    companion object {
+        private const val IMAGE_PICK_CODE = 999
+    }
+
     val REQUEST_IMAGE_CAPTURE = 1
     private var imageData: ByteArray? = null
+
+    var fileName = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
 
         cameraButton.setOnClickListener {
             Log.i("giovanne","Clicked")
@@ -51,6 +61,10 @@ class MainActivity : AppCompatActivity() {
 
         }
 
+        galleryButton.setOnClickListener {
+            launchGallery()
+        }
+
         analyzeButton.setOnClickListener {
             if (isOnline(this))  {
                 Log.d("giovanne","has conectivity")
@@ -59,43 +73,58 @@ class MainActivity : AppCompatActivity() {
 
             }
 
+            uploadImage()
+           // analyze()
+
+        }
+    }
+
+    fun randomString():String {
+        val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        return (1..10)
+            .map { allowedChars.random() }
+            .joinToString("")
+
+    }
+
+    fun uploadImage(){
+
+        fileName = randomString()
 
 
-                DropboxAPI().uploadImage(imageData,this){success: Boolean, error: Error? ->
+        DropboxAPI().uploadImage(imageData,fileName,this){success: Boolean, error: Error? ->
+                analyze()
+         }
 
-                }
+    }
 
+    fun analyze(){
 
+        DropboxAPI().getFileTempLink(fileName,this){tempPath, error ->
+            if (error != null) {
+                txtView!!.text = error.messege
 
+            }
 
-
-
-
-           /* DropboxAPI().getFileTempLink("",this){tempPath, error ->
-                if (error != null) {
-                    txtView!!.text = error.messege
-
-                }
-
-                if (tempPath != null) {
+            if (tempPath != null) {
 
 
-                    txtView!!.text = tempPath?.link
+                txtView!!.text = tempPath?.link
 
-                    IBMCloudAPI().getDescription(tempPath.link,this){ classifierParser, error ->
+                IBMCloudAPI().getDescription(tempPath.link,this){ classifierParser, error ->
 
-                        if (classifierParser != null) {
-                            txtView!!.text = classifierParser.classifiers[0].className
-
-                        }
+                    if (classifierParser != null) {
+                        txtView!!.text = classifierParser.classifiers[0].className
 
                     }
 
                 }
-            }*/
-           // getFileTempLink("test")
+
+            }
         }
+
     }
+
 
     @Throws(IOException::class)
 
@@ -133,6 +162,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun launchGallery() {
+        val intent = Intent(Intent.ACTION_PICK)
+        intent.type = "image/*"
+        startActivityForResult(intent, IMAGE_PICK_CODE)
+    }
+
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -140,14 +175,29 @@ class MainActivity : AppCompatActivity() {
         if (requestCode==REQUEST_IMAGE_CAPTURE){
 
             var bmp = data?.extras?.get("data") as Bitmap
-            picImageView.setImageBitmap(bmp)
+
 
 
             val stream = ByteArrayOutputStream()
-            bmp.compress(Bitmap.CompressFormat.PNG, 90, stream)
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, stream)
             imageData = stream.toByteArray()
 
+            Log.d("giovanne","img data " + imageData)
 
+            val bitmap = BitmapFactory.decodeByteArray(imageData, 0, imageData!!.size)
+
+
+            picImageView.setImageBitmap(bitmap)
+
+
+        }
+
+        if (resultCode == Activity.RESULT_OK && requestCode == IMAGE_PICK_CODE) {
+            val uri = data?.data
+            if (uri != null) {
+                picImageView.setImageURI(uri)
+                createImageData(uri)
+            }
         }
     }
 

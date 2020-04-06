@@ -1,6 +1,7 @@
 package com.giovanne.centennial.objectdetection
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.android.volley.AuthFailureError
 import com.android.volley.Request
@@ -9,6 +10,10 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
+import java.io.BufferedInputStream
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 
 class DropboxAPI {
 
@@ -21,7 +26,7 @@ class DropboxAPI {
 
         val params = HashMap<Any?,Any?>()
 
-        params["path"] = "/images/objDetectImage.png"
+        params["path"] = "/images/" + file +  ".png"
 
         val jsonObject = JSONObject(params)
 
@@ -67,7 +72,7 @@ class DropboxAPI {
     }
 
 
-    fun uploadImage(imageData: ByteArray?,context: Context, callback: (success: Boolean, error: Error?) -> Unit)  {
+    fun uploadImage(imageData: ByteArray?,name: String, context: Context, callback: (success: Boolean, error: Error?) -> Unit)  {
 
         imageData?: return
 
@@ -75,7 +80,6 @@ class DropboxAPI {
         Log.d("Webservice","upload Image ")
 
 
-        val queue = Volley.newRequestQueue(context)
         val url: String = "https://content.dropboxapi.com/2/files/upload"
 
         val request = object : VolleyFileUploadRequest(
@@ -85,11 +89,16 @@ class DropboxAPI {
                 println("response is: $it")
 
                 Log.d("Webservice","response  $it")
+                callback(true,null)
 
             },
             Response.ErrorListener {
                 println("error is: $it")
                 Log.d("Webservice","error  " + it.message)
+                val error = Error()
+                error.messege = error.messege
+                callback(false,error)
+
 
             }
         ) {
@@ -101,7 +110,7 @@ class DropboxAPI {
                 //insert auth here
                 headers["Authorization"] = "Bearer " + Credentials().dropBoxKey
                 headers["Content-Type"] = "application/octet-stream"
-                headers["Dropbox-API-Arg"] =" {\"path\": \"/Images/objDetectImage.png\", \"mode\": \"add\", \"autorename\": true, \"mute\": false, \"strict_conflict\": false}"
+                headers["Dropbox-API-Arg"] =" {\"path\": \"/Images/" + name +  ".png\", \"mode\": \"add\", \"autorename\": true, \"mute\": false, \"strict_conflict\": false}"
 
 
                 Log.d("Webservice","Headers  " + headers.toString())
@@ -109,10 +118,10 @@ class DropboxAPI {
 
                 return headers
             }
-            override fun getByteData(): MutableMap<String, FileDataPart> {
-                var params = HashMap<String, FileDataPart>()
-                params["imageFile"] = FileDataPart("image", imageData!!, "png")
-                return params
+            override fun getBody(): ByteArray {
+
+
+                return imageData
             }
 
         }
